@@ -20,6 +20,7 @@ import com.example.trivia.data.AnswerListAsyncResponse;
 import com.example.trivia.data.QuestionBank;
 import com.example.trivia.model.Question;
 import com.example.trivia.model.Score;
+import com.example.trivia.util.Prefs;
 
 import java.text.MessageFormat;
 import java.util.ArrayList;
@@ -34,9 +35,12 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private ImageButton prevButton;
     private ImageButton nextButton;
     private TextView score_textView;
+    private TextView high_score;
 
     private int scoreCounter = 0;
     private Score score;
+
+    private Prefs prefs;
 
     private int currentQuestionIndex = 0;
 
@@ -50,6 +54,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         setContentView(R.layout.activity_main);
 
         score = new Score();
+        prefs = new Prefs(MainActivity.this);
 
         score_textView = findViewById(R.id.score_text);
         nextButton = findViewById(R.id.next_button);
@@ -58,6 +63,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         falseButton = findViewById(R.id.false_button);
         counterTextView = findViewById(R.id.counter_text);
         questionTextView = findViewById(R.id.question_textview);
+        high_score = findViewById(R.id.highest_score);
 
         nextButton.setOnClickListener(this);
         prevButton.setOnClickListener(this);
@@ -65,6 +71,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         falseButton.setOnClickListener(this);
 
         score_textView.setText(MessageFormat.format("Current Score: {0}", String.valueOf(score.getScore())));
+        high_score.setText(String.valueOf(MessageFormat.format("Highest Score: {0}", prefs.getHighScore())));
+
+        //get prev state
+        currentQuestionIndex = prefs.getState();
 
         questionList = new QuestionBank().getQuestions(new AnswerListAsyncResponse() {
             @Override
@@ -165,6 +175,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             @Override
             public void onAnimationEnd(Animation animation) {
                 cardView.setCardBackgroundColor(Color.WHITE);
+                currentQuestionIndex = (currentQuestionIndex + 1 ) % questionList.size();
+                updateQuestion();
             }
 
             @Override
@@ -188,6 +200,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             @Override
             public void onAnimationEnd(Animation animation) {
                 cardView.setCardBackgroundColor(Color.WHITE);
+                currentQuestionIndex = (currentQuestionIndex + 1 ) % questionList.size();
+                updateQuestion();
             }
 
             @Override
@@ -195,5 +209,12 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
             }
         });
+    }
+
+    @Override
+    protected void onPause() {
+        prefs.saveHighScore(score.getScore());
+        prefs.setState(currentQuestionIndex);
+        super.onPause();
     }
 }
